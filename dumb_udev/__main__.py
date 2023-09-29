@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    unmanic.__main__.py
+    __main__.py
 
     Written by:               Josh.5 <jsunnex@gmail.com>
     Date:                     20 September 2023, (18:53 PM)

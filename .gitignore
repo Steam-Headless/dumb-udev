@@ -1,0 +1,11 @@
+# Files needed for development only
+venv/**
+
+# Files created during the build process
+.eggs/**
+build/**
+dist/**
+dumb_udev.egg-info/**
+
+# Compiled files
+**.pyc

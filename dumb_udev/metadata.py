@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    unmanic.metadata.py
+    metadata.py
 
     Written by:               Josh.5 <jsunnex@gmail.com>
     Date:                     20 September 2023, (18:53 PM)
