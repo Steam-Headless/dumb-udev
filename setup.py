@@ -48,6 +48,7 @@ import versioninfo
 project_root_dir = os.path.dirname(os.path.realpath(__file__))
 src_dir = 'dumb_udev'
 
+bin_name = versioninfo.bin_name()
 module_name = versioninfo.name()
 module_version = versioninfo.version()
 module_description = versioninfo.description()
@@ -161,7 +162,7 @@ setup(
     packages=[src_dir],
     entry_points={
         'console_scripts': [
-            '%s=%s.service:main' % (module_name, module_name)
+            '%s=%s.service:main' % (bin_name, module_name)
         ]
     },
     cmdclass=cmd_class,

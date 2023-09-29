@@ -42,6 +42,10 @@ def name():
     return str(version_info.__name)
 
 
+def bin_name():
+    return str(version_info.__name.replace('_', '-'))
+
+
 def version():
     if is_git_vcs():
         git_version_info = get_git_version_info()
