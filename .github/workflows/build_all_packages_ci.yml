@@ -15,7 +15,6 @@ jobs:
   py_build:
 
     name: Build Python package
-    needs: integration_tests
     runs-on: ubuntu-latest
 
     steps:
@@ -52,6 +51,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
     # Build python dist package
     - name: Build python dist package

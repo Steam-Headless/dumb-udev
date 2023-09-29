@@ -7,3 +7,5 @@ dumb-udev
 
 This python module is a minimal input broadcaster designed to be run inside containers as a replacement to udevd.
 This is not a full udevd replacement.
+
+---
