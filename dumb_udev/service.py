@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import os
@@ -29,18 +30,20 @@ class DumbUdevRelay:
 
     Attributes:
         loop (asyncio.AbstractEventLoop): The asyncio event loop.
+        config (argparse.Namespace): The service configuration.
         context (pyudev.Context | None): The udev context.
         kmonitor (pyudev.Monitor | None): The udev kernel monitor.
         log (logging.Logger): The logger for this class.
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop):
+    def __init__(self, loop: asyncio.AbstractEventLoop, config: argparse.Namespace):
         """Initialize the DumbUdevRelay.
 
-        Args:
-            loop (asyncio.AbstractEventLoop): The asyncio event loop.
+        :param loop: The asyncio event loop.
+        :param config: The service configuration.
         """
         self.loop = loop
+        self.config = config
         self.context: pyudev.Context | None = None
         self.kmonitor: pyudev.Monitor | None = None
         self.log = logging.getLogger(__class__.__name__)
@@ -73,9 +76,12 @@ class DumbUdevRelay:
         except Exception as e:
             self.log.error(f"An error occurred during shutdown: {str(e)}")
 
-    @staticmethod
-    def ensure_udev_paths():
+    def ensure_udev_paths(self):
         """Ensure the existence of udev-related paths and set permissions."""
+        if self.config.relay_only:
+            # This function is not run in relay only mode
+            self.log.debug("Skipping udev path creation due to running in relay only mode.")
+            return
         # Create directories and set permissions
         udev_paths = [
             ("/dev/input", 0o755),
@@ -133,6 +139,10 @@ class DumbUdevRelay:
         :param device_number: The major and minor numbers for the device.
         :return:
         """
+        if self.config.relay_only:
+            # This function is not run in relay only mode
+            self.log.debug("Skipping device node modifications due to running in relay only mode.")
+            return
         if action == "add":
             try:
                 st = os.stat(device_node)
@@ -167,6 +177,10 @@ class DumbUdevRelay:
         :param device: The device for which udev data files are managed.
         :return:
         """
+        if self.config.relay_only:
+            # This function is not run in relay only mode
+            self.log.debug("Skipping udev data modifications due to running in relay only mode.")
+            return
 
         def build_data_content(dev: pyudev.Device):
             """Adds udev data files as required.
@@ -362,7 +376,7 @@ class DumbUdevRelay:
             :param message: The custom udev event message bytes.
             :return:
             """
-            sendfd = socket.socket(socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_KOBJECT_UEVENT)
+            sendfd = socket.socket(socket.AF_NETLINK, socket.SOCK_RAW|socket.SOCK_NONBLOCK, NETLINK_KOBJECT_UEVENT)
             try:
                 sendfd.sendto(message, (0, UDEV_MONITOR_UDEV))
             except ConnectionRefusedError:
@@ -442,10 +456,22 @@ async def shutdown(signal_name: str, relay: DumbUdevRelay, loop: asyncio.Abstrac
 
 
 def main():
+    # Configure logging
     logging.basicConfig(level=logging.INFO)
-    loop = asyncio.new_event_loop()
+    log = logging.getLogger("Service")
 
-    with DumbUdevRelay(loop) as relay:
+    # Parse args
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--relay-only", dest="relay_only", action="store_true")
+    config = parser.parse_args()
+
+    # Print config
+    if config.relay_only:
+        log.info(f"Running in message relay only mode.")
+
+    # Start loop
+    loop = asyncio.new_event_loop()
+    with DumbUdevRelay(loop, config) as relay:
         signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
         for s in signals:
             loop.add_signal_handler(
